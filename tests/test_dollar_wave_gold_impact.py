@@ -19,8 +19,15 @@ class DollarWaveGoldImpactTests(unittest.TestCase):
         self.assertEqual(classify_dollar_change("0.9"), "VERY_STRONG")
 
     def test_up_wave_is_negative_for_gold(self):
-        result = dollar_wave_gold_impact("UP", "0.006", dxy_value="100.283", timeframe="3m")
+        result = dollar_wave_gold_impact(
+            "UP",
+            "0.006",
+            market="GOLD",
+            dxy_value="100.283",
+            timeframe="3m",
+        )
         self.assertEqual(result.state, "OBSERVED_RULE")
+        self.assertEqual(result.market, "GOLD")
         self.assertEqual(result.wave_direction, "UP")
         self.assertEqual(result.strength, "MEDIUM")
         self.assertEqual(result.gold_effect, "NEGATIVE")
@@ -28,8 +35,20 @@ class DollarWaveGoldImpactTests(unittest.TestCase):
         self.assertEqual(result.dxy_value, Decimal("100.283"))
         self.assertEqual(result.timeframe, "3m")
 
+    def test_xauusd_alias_is_allowed(self):
+        result = dollar_wave_gold_impact("DOWN", "0.01", market="XAUUSD")
+        self.assertEqual(result.state, "OBSERVED_RULE")
+        self.assertEqual(result.market, "XAUUSD")
+        self.assertEqual(result.gold_effect, "POSITIVE")
+
+    def test_non_gold_market_fails_closed(self):
+        for market in ("BTCUSDT", "ETHUSDT", "CRYPTO", "FOREX", "SILVER"):
+            result = dollar_wave_gold_impact("UP", "0.006", market=market)
+            self.assertEqual(result.state, "DATA_UNAVAILABLE")
+            self.assertIsNone(result.gold_effect)
+
     def test_down_wave_is_positive_for_gold(self):
-        result = dollar_wave_gold_impact("DOWN", "0.01")
+        result = dollar_wave_gold_impact("DOWN", "0.01", market="GOLD")
         self.assertEqual(result.state, "OBSERVED_RULE")
         self.assertEqual(result.gold_effect, "POSITIVE")
         self.assertEqual(result.strength, "STRONG")
@@ -37,12 +56,12 @@ class DollarWaveGoldImpactTests(unittest.TestCase):
     def test_invalid_values_fail_closed(self):
         for value in (None, "0", "0.0009", "0.91", "-0.1", "not-a-number"):
             self.assertIsNone(classify_dollar_change(value))
-            result = dollar_wave_gold_impact("UP", value)
+            result = dollar_wave_gold_impact("UP", value, market="GOLD")
             self.assertEqual(result.state, "DATA_UNAVAILABLE")
             self.assertIsNone(result.gold_effect)
 
     def test_invalid_direction_fails_closed(self):
-        result = dollar_wave_gold_impact("FLAT", "0.006")
+        result = dollar_wave_gold_impact("FLAT", "0.006", market="GOLD")
         self.assertEqual(result.state, "DATA_UNAVAILABLE")
         self.assertIsNone(result.gold_effect)
 
@@ -50,6 +69,7 @@ class DollarWaveGoldImpactTests(unittest.TestCase):
         result = dollar_wave_gold_impact(
             "UP",
             "0.006",
+            market="GOLD",
             dxy_value="100.283",
             timeframe="3m",
         )
