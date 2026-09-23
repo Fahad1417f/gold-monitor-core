@@ -4,6 +4,8 @@
 
 Implemented as an observed-rule evidence layer from the KFOO table examples supplied on 2026-09-23.
 
+**Scope is GOLD/XAUUSD only.** This rule must not be applied to crypto, silver, forex pairs, or any other market. Non-gold input fails closed.
+
 This is intentionally not a replacement for the five hard KFOO entry conditions.
 
 ## Exact mapping
@@ -19,7 +21,7 @@ The table distinguishes the current DXY value from the last-candle change value.
 
 The boundaries are inclusive.
 
-## Direction mapping
+## Direction mapping for GOLD/XAUUSD
 
 - Dollar wave UP -> observed gold effect NEGATIVE
 - Dollar wave DOWN -> observed gold effect POSITIVE
@@ -30,6 +32,7 @@ The same numeric change therefore has opposite gold effects depending on wave di
 
 The implementation stores these fields separately:
 
+- market: GOLD or XAUUSD
 - dxy_value: current DXY/index value, e.g. 100.283
 - change_value: last-candle change, e.g. 0.006
 - wave_direction: UP or DOWN
@@ -38,7 +41,7 @@ The implementation stores these fields separately:
 - timeframe: source timeframe when known
 - state: OBSERVED_RULE or DATA_UNAVAILABLE
 
-Values outside 0.001-0.9, missing values, or invalid directions fail closed.
+Values outside 0.001-0.9, missing values, invalid directions, and non-gold markets fail closed.
 
 ## Safety boundary
 
