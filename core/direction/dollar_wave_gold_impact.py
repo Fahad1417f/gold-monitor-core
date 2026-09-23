@@ -1,8 +1,11 @@
-"""Observed DXY-wave impact mapping for gold.
+"""Observed DXY-wave impact mapping for GOLD only.
 
 This module encodes the user's observed KFOO table convention shown in
 reference screenshots. It is an evidence layer, not a substitute for
 KFOO's hard-entry rules and not a claim of causal market behavior.
+
+The DXY-wave rule is intentionally restricted to GOLD/XAUUSD. It must not
+be applied to crypto or any other market.
 """
 
 from __future__ import annotations
@@ -15,11 +18,13 @@ WaveDirection = Literal["UP", "DOWN"]
 Strength = Literal["WEAK", "MEDIUM", "STRONG", "VERY_STRONG"]
 GoldEffect = Literal["POSITIVE", "NEGATIVE"]
 State = Literal["OBSERVED_RULE", "DATA_UNAVAILABLE"]
+GoldMarket = Literal["GOLD", "XAUUSD"]
 
 
 @dataclass(frozen=True)
 class DollarWaveImpact:
     state: State
+    market: str
     wave_direction: Optional[WaveDirection]
     change_value: Optional[Decimal]
     strength: Optional[Strength]
@@ -52,16 +57,7 @@ def _decimal(value: Any) -> Optional[Decimal]:
 
 
 def classify_dollar_change(value: Any) -> Optional[Strength]:
-    """Map the absolute last-candle dollar change to the observed bands.
-
-    Boundaries are inclusive:
-      0.001-0.005 -> WEAK
-      0.006-0.009 -> MEDIUM
-      0.01-0.09   -> STRONG
-      0.1-0.9     -> VERY_STRONG
-
-    Values outside the documented range are intentionally unavailable.
-    """
+    """Map the absolute last-candle dollar change to the observed bands."""
     change = _decimal(value)
     if change is None or change < Decimal("0.001") or change > Decimal("0.9"):
         return None
@@ -79,21 +75,37 @@ def dollar_wave_gold_impact(
     wave_direction: Any,
     change_value: Any,
     *,
+    market: Any,
     dxy_value: Any = None,
     timeframe: Optional[str] = None,
 ) -> DollarWaveImpact:
-    """Return the observed gold-impact interpretation of a DXY wave.
+    """Return the observed DXY-wave interpretation for GOLD only.
 
-    UP dollar wave -> NEGATIVE gold effect.
-    DOWN dollar wave -> POSITIVE gold effect.
+    GOLD/XAUUSD:
+      UP dollar wave -> NEGATIVE gold effect.
+      DOWN dollar wave -> POSITIVE gold effect.
 
-    The returned interpretation is deliberately descriptive and is not a
-    trading decision. Missing/invalid evidence fails closed.
+    Any other market fails closed and receives no gold effect.
     """
+    normalized_market = str(market).strip().upper() if market is not None else ""
+    if normalized_market not in {"GOLD", "XAUUSD"}:
+        return DollarWaveImpact(
+            state="DATA_UNAVAILABLE",
+            market=normalized_market,
+            wave_direction=None,
+            change_value=None,
+            strength=None,
+            gold_effect=None,
+            dxy_value=_decimal(dxy_value),
+            timeframe=timeframe,
+            interpretation="Dollar-wave gold-impact rule is restricted to GOLD/XAUUSD.",
+        )
+
     direction = str(wave_direction).strip().upper() if wave_direction is not None else ""
     if direction not in {"UP", "DOWN"}:
         return DollarWaveImpact(
             state="DATA_UNAVAILABLE",
+            market=normalized_market,
             wave_direction=None,
             change_value=None,
             strength=None,
@@ -108,6 +120,7 @@ def dollar_wave_gold_impact(
     if change is None or strength is None:
         return DollarWaveImpact(
             state="DATA_UNAVAILABLE",
+            market=normalized_market,
             wave_direction=direction,
             change_value=change,
             strength=None,
@@ -125,18 +138,18 @@ def dollar_wave_gold_impact(
         interpretation = "Moderate observed effect on gold."
     elif strength == "STRONG":
         interpretation = (
-            "Strong observed movement; an UP dollar wave may indicate the "
-            "beginning of a gold top, while a DOWN wave may indicate the "
-            "beginning of a gold bottom."
+            "Strong observed movement; the reference rule describes a possible "
+            "beginning of a gold top/bottom."
         )
     else:
         interpretation = (
             "Very strong observed movement; the reference rule describes a "
-            "fast/strong move (pump or dump) on gold."
+            "fast/strong move on gold."
         )
 
     return DollarWaveImpact(
         state="OBSERVED_RULE",
+        market=normalized_market,
         wave_direction=direction,
         change_value=change,
         strength=strength,
