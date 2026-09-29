@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Literal
 from .models import OptionContract
 
-Provider = Literal["YAHOO", "DERIBIT"]
+Provider = Literal["YAHOO", "DERIBIT", "ALPACA"]
 
 @dataclass(frozen=True)
 class OptionChainSnapshot:
@@ -21,6 +21,9 @@ def load_chain(provider: Provider, underlying: str, **kwargs) -> OptionChainSnap
         elif provider == "DERIBIT":
             from adapters.options.deribit import fetch_deribit_options
             contracts = fetch_deribit_options(kwargs.get("currency", underlying))
+        elif provider == "ALPACA":
+            from adapters.options.alpaca import fetch_alpaca_options
+            contracts = fetch_alpaca_options(underlying, kwargs.get("expiration"))
         else:
             return OptionChainSnapshot(provider, underlying, (), "DATA_UNAVAILABLE", "Unsupported options provider.")
         if not contracts:
