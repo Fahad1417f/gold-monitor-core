@@ -40,7 +40,8 @@ def _contract_rows(symbol: str, expiration: str | None) -> list[dict[str, Any]]:
     }
     if expiration:
         params["expiration_date"] = expiration
-    url = BROKER_BASE_URL + "?" + urllib.parse.urlencode(params)
+    base_url = os.getenv("ALPACA_BROKER_BASE_URL", BROKER_BASE_URL)
+    url = base_url + "?" + urllib.parse.urlencode(params)
     payload = _get(url)
     return list(payload.get("option_contracts") or [])
 
