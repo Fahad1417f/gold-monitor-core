@@ -64,3 +64,11 @@ A signal may only be labelled KFOO when its required KFOO evidence is explicitly
 ## Trading safety
 
 No live trading or order placement is enabled by this repository's initial design.
+
+## Options Monitor
+
+The repository now includes a read-only Options Intelligence layer under `core/options/` and a static dashboard under `docs/options-monitor/`.
+
+The options layer inherits the documented KFOO evidence boundary and MTF context, then evaluates contract mechanics separately: DTE, delta, liquidity, IV/Greeks provenance, premium, and target-based R:R. Gold retains its DXY-only observed rule; crypto can use BTC market leadership context.
+
+No live order placement is enabled.
