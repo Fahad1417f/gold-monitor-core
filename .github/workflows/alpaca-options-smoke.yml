@@ -14,7 +14,8 @@ jobs:
     env:
       ALPACA_API_KEY_ID: ${{ secrets.ALPACA_API_KEY_ID }}
       ALPACA_API_SECRET_KEY: ${{ secrets.ALPACA_API_SECRET_KEY }}
-      ALPACA_OPTIONS_FEED: ${{ vars.ALPACA_OPTIONS_FEED || 'indicative' }}
+      # Free Alpaca Basic options feed.
+      ALPACA_OPTIONS_FEED: indicative
       ALPACA_BROKER_BASE_URL: https://paper-api.alpaca.markets/v2/options/contracts
     steps:
       - uses: actions/checkout@v4
