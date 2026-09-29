@@ -123,7 +123,7 @@ def fetch_alpaca_options(
                 dte=dte,
                 bid=bid,
                 ask=ask,
-                volume=float(trade.get("s") or snapshot.get("volume") or 0),
+                volume=float(snapshot.get("volume") or 0),
                 open_interest=float(row.get("open_interest") or 0),
                 implied_volatility=(float(iv) if iv is not None else None),
                 delta=(float(greeks["delta"]) if greeks.get("delta") is not None else None),
