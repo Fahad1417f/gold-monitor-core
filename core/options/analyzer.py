@@ -2,11 +2,16 @@ from __future__ import annotations
 from .liquidity import validate_liquidity
 from .models import OptionContract, OptionsAnalysis, OptionsPolicy, UnderlyingSignal
 from .payoff import target_rr
+
 def analyze_contract(signal: UnderlyingSignal, contract: OptionContract, *, target_underlying: float | None, policy: OptionsPolicy = OptionsPolicy()) -> OptionsAnalysis:
     if signal.kfoo_state in {"DATA_UNAVAILABLE", "WAITING_FOR_EVIDENCE"}:
         return OptionsAnalysis("WAITING_FOR_EVIDENCE", contract.symbol, contract.underlying, signal.direction, ("UNDERLYING_KFOO_EVIDENCE_INCOMPLETE",), target_underlying, None, None, None, None)
-    if signal.direction == "NEUTRAL":
-        return OptionsAnalysis("REJECTED", contract.symbol, contract.underlying, signal.direction, ("UNDERLYING_DIRECTION_NEUTRAL",), target_underlying, None, None, None, None)
+    if not signal.gates_complete:
+        return OptionsAnalysis("WAITING_FOR_EVIDENCE", contract.symbol, contract.underlying, signal.direction, ("KFOO_HARD_GATES_INCOMPLETE",), target_underlying, None, None, None, None)
+    if signal.direction == "NEUTRAL" or signal.direction == "UNKNOWN":
+        return OptionsAnalysis("REJECTED", contract.symbol, contract.underlying, signal.direction, ("UNDERLYING_DIRECTION_NOT_ACTIONABLE",), target_underlying, None, None, None, None)
+    if target_underlying is None:
+        return OptionsAnalysis("WAITING_FOR_EVIDENCE", contract.symbol, contract.underlying, signal.direction, ("TARGET_UNDERLYING_UNAVAILABLE",), None, None, None, None)
     reasons: list[str] = []
     expected = "CALL" if signal.direction == "BULLISH" else "PUT"
     if contract.option_type != expected: reasons.append("OPTION_TYPE_MISMATCH")
@@ -18,7 +23,7 @@ def analyze_contract(signal: UnderlyingSignal, contract: OptionContract, *, targ
     premium = contract.premium if contract.premium is not None else contract.mid
     if premium <= 0: reasons.append("PREMIUM_UNAVAILABLE")
     reward = max_loss = rr = None
-    if target_underlying is not None and premium > 0:
+    if premium > 0:
         reward, max_loss, rr = target_rr(contract, target_underlying)
         if rr is None: reasons.append("TARGET_REWARD_NON_POSITIVE")
         elif rr < policy.min_rr: reasons.append("TARGET_RR_BELOW_POLICY")
