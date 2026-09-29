@@ -71,4 +71,6 @@ The repository now includes a read-only Options Intelligence layer under `core/o
 
 The options layer inherits the documented KFOO evidence boundary and MTF context, then evaluates contract mechanics separately: DTE, delta, liquidity, IV/Greeks provenance, premium, and target-based R:R. Gold retains its DXY-only observed rule; crypto can use BTC market leadership context.
 
+US-listed options are connected through an Alpaca market-data adapter (OPRA or indicative feed, depending on entitlement/configuration). Yahoo remains a research fallback. Provider credentials are read from environment variables only; no credentials are committed to the repository.
+
 No live order placement is enabled.
