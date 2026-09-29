@@ -32,27 +32,37 @@ def _get(url: str) -> dict[str, Any]:
         return json.load(response)
 
 
-def _contract_rows(symbol: str, expiration: str | None) -> list[dict[str, Any]]:
+def _normalize_expiration(expiration: str | int | None) -> str | None:
+    if expiration is None:
+        return None
+    if isinstance(expiration, int):
+        return datetime.fromtimestamp(expiration, tz=timezone.utc).date().isoformat()
+    return str(expiration)
+
+
+def _contract_rows(symbol: str, expiration: str | int | None) -> list[dict[str, Any]]:
     params = {
         "underlying_symbols": symbol.upper(),
         "status": "active",
         "limit": "10000",
     }
-    if expiration:
-        params["expiration_date"] = expiration
+    normalized_expiration = _normalize_expiration(expiration)
+    if normalized_expiration:
+        params["expiration_date"] = normalized_expiration
     base_url = os.getenv("ALPACA_BROKER_BASE_URL", BROKER_BASE_URL)
     url = base_url + "?" + urllib.parse.urlencode(params)
     payload = _get(url)
     return list(payload.get("option_contracts") or [])
 
 
-def _chain_snapshot(symbol: str, expiration: str | None) -> dict[str, Any]:
+def _chain_snapshot(symbol: str, expiration: str | int | None) -> dict[str, Any]:
     params: dict[str, str] = {
         "feed": os.getenv("ALPACA_OPTIONS_FEED", "indicative"),
         "limit": "1000",
     }
-    if expiration:
-        params["expiration_date"] = expiration
+    normalized_expiration = _normalize_expiration(expiration)
+    if normalized_expiration:
+        params["expiration_date"] = normalized_expiration
     url = DATA_BASE_URL.replace(
         "/snapshots/",
         "/snapshots/",
@@ -76,7 +86,7 @@ def _parse_occ(symbol: str) -> tuple[str, str, str, float]:
 
 def fetch_alpaca_options(
     symbol: str,
-    expiration: str | None = None,
+    expiration: str | int | None = None,
 ) -> list[OptionContract]:
     symbol = symbol.upper()
     rows = _contract_rows(symbol, expiration)
