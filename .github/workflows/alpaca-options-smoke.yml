@@ -1,0 +1,29 @@
+name: Alpaca Options Smoke Test
+
+on:
+  push:
+    branches:
+      - feature/options-monitor-20260929
+  workflow_dispatch:
+    inputs:
+      symbol:
+        description: "US equity/ETF underlying"
+        required: false
+        default: "NVDA"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      ALPACA_API_KEY_ID: ${{ secrets.ALPACA_API_KEY_ID }}
+      ALPACA_API_SECRET_KEY: ${{ secrets.ALPACA_API_SECRET_KEY }}
+      # Free Alpaca Basic options feed.
+      ALPACA_OPTIONS_FEED: indicative
+      ALPACA_BROKER_BASE_URL: https://paper-api.alpaca.markets/v2/options/contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run Alpaca options smoke test
+        run: python scripts/alpaca_options_smoke.py "${{ inputs.symbol }}"

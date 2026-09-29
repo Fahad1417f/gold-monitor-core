@@ -23,6 +23,7 @@ core/
   kfoo_rules/
   evidence/
   direction/
+    dollar_wave_gold_impact.py
   multi_timeframe/
   structure/
   scoring/
@@ -41,10 +42,35 @@ tests/
 docs/
 ```
 
+## Dollar-wave evidence
+
+The repository now contains an observed-rule component for the DXY table convention supplied on 2026-09-23:
+
+- 0.001-0.005 → WEAK
+- 0.006-0.009 → MEDIUM
+- 0.01-0.09 → STRONG
+- 0.1-0.9 → VERY_STRONG
+- Dollar wave UP → observed NEGATIVE gold effect
+- Dollar wave DOWN → observed POSITIVE gold effect
+
+The current DXY/index price and the last-candle change value are stored separately. Invalid or undocumented values fail closed. This layer is evidence/context only and cannot independently create a trade signal.
+
+See docs/DOLLAR_WAVE_GOLD_IMPACT.md.
+
 ## KFOO evidence contract
 
-A signal may only be labelled `KFOO` when its required KFOO evidence is explicitly available and verified. Otherwise the system uses states such as `WAITING_FOR_EVIDENCE`, `DATA_UNAVAILABLE`, or `PROXY` and never silently substitutes a proxy for KFOO.
+A signal may only be labelled KFOO when its required KFOO evidence is explicitly available and verified. Otherwise the system uses states such as WAITING_FOR_EVIDENCE, DATA_UNAVAILABLE, or PROXY and never silently substitutes a proxy for KFOO.
 
 ## Trading safety
 
 No live trading or order placement is enabled by this repository's initial design.
+
+## Options Monitor
+
+The repository now includes a read-only Options Intelligence layer under `core/options/` and a static dashboard under `docs/options-monitor/`.
+
+The options layer inherits the documented KFOO evidence boundary and MTF context, then evaluates contract mechanics separately: DTE, delta, liquidity, IV/Greeks provenance, premium, and target-based R:R. Gold retains its DXY-only observed rule; crypto can use BTC market leadership context.
+
+US-listed options are connected through an Alpaca market-data adapter (OPRA or indicative feed, depending on entitlement/configuration). Yahoo remains a research fallback. Provider credentials are read from environment variables only; no credentials are committed to the repository.
+
+No live order placement is enabled.
